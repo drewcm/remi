@@ -1,0 +1,40 @@
+#!/bin/bash
+
+die () {
+  echo >&2 "Error: $@"
+  exit 1
+}
+
+[ "$#" -gt 0 ] || die "reminder argument(s) required"
+
+command -v jq >/dev/null 2>&1 || die "the command 'jq' must be installed"
+
+[[ -n "$REMI_API_TOKEN" ]] || die "\$REMI_API_TOKEN must be set"
+[[ -n "$REMI_URL" ]] || die "\$REMI_URL must be set"
+
+APP_JSON="Content-Type: application/json"
+
+if [[ -z "$REMI_DEBUG" ]]; then
+  JQ_QUERY='.[] | .text'
+else
+  JQ_QUERY='.'
+fi
+
+str="$*"
+response=$(curl -s -u "$REMI_API_TOKEN": -d "{\"body\":\"$str\"}" -H "$APP_JSON" -X POST $REMI_URL)
+
+if [[ $? != 0 ]]; then
+  die "unable to connect to '$REMI_URL'"
+fi
+
+output=$(jq -Cer "$JQ_QUERY" 2>&1 <<< "$response")
+
+if [[ $? == 0 ]]; then
+  echo "$output"
+elif [[ -n "$REMI_DEBUG" ]]; then
+  echo >&2 $response
+  echo >&2
+  die "jq: $output"
+else
+  die "server response is invalid JSON"
+fi

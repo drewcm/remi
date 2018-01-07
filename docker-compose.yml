@@ -1,0 +1,46 @@
+version: '2.0'
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: ./docker/api/Dockerfile
+    volumes:
+      - ./remi:/app
+    ports:
+      - "80:80"
+    depends_on:
+      - rabbitmq
+    restart: always
+    env_file: ${ENV_FILE}
+  reminder_mgr:
+    build:
+      context: .
+      dockerfile: ./docker/reminder_mgr/Dockerfile
+    volumes:
+      - ./remi:/app
+      - instance:/instance
+    depends_on:
+      - rabbitmq
+    restart: always
+    env_file: ${ENV_FILE}
+  pushbullet:
+    build:
+      context: .
+      dockerfile: ./docker/pushbullet/Dockerfile
+    volumes:
+      - ./remi:/app
+    depends_on:
+      - rabbitmq
+    restart: always
+    env_file: ${ENV_FILE}
+  rabbitmq:
+    image: rabbitmq:3.6-management-alpine
+    expose:
+      - 5672
+    ports:
+      - "15674:15672"
+    restart: always
+    env_file: ${ENV_FILE}
+volumes:
+  instance:
+

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+export FLASK_APP=remi/rest_app.py
+#export FLASK_DEBUG=1
+export FLASK_DEBUG=0
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export PYTHONPATH=$DIR/../remi
+
+flask run #--no-reload

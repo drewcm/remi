@@ -1,0 +1,39 @@
+{
+    "outgoing_interfaces": ["pushbullet"],
+    "default_timezone": "US/Mountain",
+    "rabbitmq": {
+        "host": "rabbitmq",
+        "port": 5672,
+        "queue_in": "reminder_in",
+        "queue_out": "reminder_out"
+    },
+    "db_filename": "remi.sqlite",
+    "flask": {
+        "debug": false
+    },
+    "logging": {
+        "disable_existing_loggers": false,
+        "version" : 1,
+        "formatters": {
+            "default": {
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                "new format": "%(asctime)s - %(levelname)s - %(message)s",
+                "datefmt" : "%Y-%m-%d %H:%M:%S"
+            }
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": "DEBUG",
+                "formatter": "default",
+                "stream": "ext://sys.stdout"
+            }
+        },
+        "loggers": {
+            "": {
+                "level": "INFO",
+                "handlers": ["console"]
+            }
+        }
+    }
+}

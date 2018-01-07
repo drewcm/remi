@@ -1,0 +1,19 @@
+#!/bin/bash
+
+die () {
+  echo >&2 "Error: $@"
+  exit 1
+}
+
+[ "$#" -gt 0 ] || die "pushbullet argument(s) required"
+
+command -v jq >/dev/null 2>&1 || die "the command 'jq' must be installed"
+
+PUSHBULLET_URL=https://api.pushbullet.com/v2/pushes
+
+[[ -n "$PUSHBULLET_API_TOKEN" ]] || die "\$PUSHBULLET_API_TOKEN must be set"
+
+str="$*"
+
+curl -s -u "$PUSHBULLET_API_TOKEN": $PUSHBULLET_URL -d type=note -d body="$str" | jq
+
