@@ -27,9 +27,11 @@ class QueryThread(threading.Thread):
         self.is_interrupted = False
 
     def stop(self):
+        """Tells this thread to wrap up."""
         self.is_interrupted = True
 
     def db_reminder_check(self, channel):
+        """Check database for any reminders that are past due."""
         c = self.db_conn.cursor()
         result = c.execute('''
             SELECT id, source, stop, content FROM reminder
@@ -142,17 +144,17 @@ class ReminderManager():
             message = self._process_request(ch, method, props, body)
             response = {"data": {"text": message}}
         except ValueError as ve:
-            response = {"error": {"code": 400, "text": 
+            response = {"error": {"code": 400, "text":
                 ("Unable to parse the date/time you provided.  Use the "
                  "\"HELP\" command to see usage examples.")}}
             self.logger.exception("Error processing reminder request")
         except sqlite3.DatabaseError as dbe:
-            response = {"error": {"code": 500, "text": 
+            response = {"error": {"code": 500, "text":
                 ("There was an error creating your reminder.  Please try "
                  "again later.")}}
             self.logger.exception("Error processing reminder request")
         except Exception as ex:
-            response = {"error": {"code": 500, "text": 
+            response = {"error": {"code": 500, "text":
                 ("An unexpected error occurred while processing your request. "
                  "Please try again.")}}
             self.logger.exception("Error processing reminder request")
@@ -164,6 +166,15 @@ class ReminderManager():
 
     @staticmethod
     def make_error_response(code, text, user_message=None):
+        """Helper function for formatting error responses
+
+        Args:
+            code: error status code
+            text: error message string
+
+        Returns:
+            Python dictionary for error message.
+        """
         return {
             "error": {
                 "code": code,
@@ -218,6 +229,7 @@ class ReminderManager():
             self.pika_conn.close()
 
 def main():
+    """Set up logging and start up a ReminderManager object"""
     if "logging" in settings.cfg:
         logging.config.dictConfig(settings.cfg["logging"])
     logger = logging.getLogger(__name__)

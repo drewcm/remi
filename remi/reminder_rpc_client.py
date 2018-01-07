@@ -13,7 +13,15 @@ class ResponseTimeout(Exception):
     pass
 
 class ReminderRpcClient(object):
+    """RPC Client for ReminderManager requests."""
+
     def __init__(self):
+        """Initialize pika connection and consume on callback queue.
+
+        Note:
+            Requires that "RABBITMQ_DEFAULT_USER" and "RABBITMQ_DEFAULT_PASS"
+            are set.
+        """
         self.response = None
         self.logger = logging.getLogger(__name__)
         credentials = pika.PlainCredentials(
@@ -30,10 +38,21 @@ class ReminderRpcClient(object):
                                    queue=self.callback_queue)
 
     def on_response(self, dummy_ch, dummy_method, props, body):
+        """Handler for pika response messages from ReminderManager"""
         if self.correlation_id == props.correlation_id:
             self.response = json.loads(body.decode('utf-8'))
 
     def call(self, message, timeout=4):
+        """Pass message to ReminderManager and return a response.
+
+        Args:
+            message: JSON message
+            timeout: seconds to wait before raising a ResponseTimeout
+                exception
+
+        Returns:
+            Response from ReminderManager as a Python dictionary.
+        """
         self.response = None
         self.correlation_id = str(uuid.uuid4())
         self.logger.info("Sending reminder request on '%s'",

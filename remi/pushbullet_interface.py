@@ -18,6 +18,12 @@ HTTP_PROXY_HOST = None
 HTTP_PROXY_PORT = None
 
 class ReminderMessageConsumer(threading.Thread):
+    """Consume reminder messages off of ReminderMQ queue, and send out via PushBullet.
+
+    Note:
+       Requires that the environment variable PUSHBULLET_API_TOKEN is set.
+    """
+
     def __init__(self):
         threading.Thread.__init__(self)
         self.logger = logging.getLogger(__name__)
@@ -26,9 +32,11 @@ class ReminderMessageConsumer(threading.Thread):
         self.is_interrupted = False
 
     def stop(self):
+        """Tells this thread to wrap up."""
         self.is_interrupted = True
 
     def run(self):
+        """Wrapper around _run to catch and log exceptions"""
         while True:
             try:
                 self._run()
@@ -40,6 +48,12 @@ class ReminderMessageConsumer(threading.Thread):
             time.sleep(0.5)
 
     def _run(self):
+        """Connect to RabbitMQ and pass along any reminder messages.
+
+        Note:
+            Requires that RABBITMQ_DEFAULT_USER and RABBITMQ_DEFAULT_PASS
+            environment variables are set.
+        """
         credentials = pika.PlainCredentials(
             os.environ.get("RABBITMQ_DEFAULT_USER"),
             os.environ.get("RABBITMQ_DEFAULT_PASS"))
@@ -47,7 +61,7 @@ class ReminderMessageConsumer(threading.Thread):
             pika.ConnectionParameters(
                 host=settings.cfg["rabbitmq"]["host"],
                 port=settings.cfg["rabbitmq"]["port"],
-                credentials=credentials 
+                credentials=credentials
                 ))
         self.logger.info("Outgoing reminders will be sent on queue '%s'",
             settings.cfg["rabbitmq"]["queue_out"])
@@ -75,10 +89,16 @@ class ReminderMessageConsumer(threading.Thread):
         self.logger.info("ReminderMessageConsumer.run() exiting.")
 
 class PushbulletManager():
+    """Manager interface to and from PushBullet.
+
+    Note:
+       Requires that the environment variable PUSHBULLET_API_TOKEN is set.
+    """
     REMINDER_KEYWORD = r"remi(nder)?\s+"
     last_mod_time = 0.0
 
     def __init__(self):
+        """Create PushBullet listener."""
         self.logger = logging.getLogger(__name__)
         self.logger.info("Starting PushbulletManager...")
         self.pb = Pushbullet(os.environ.get("PUSHBULLET_API_TOKEN"))
@@ -92,8 +112,9 @@ class PushbulletManager():
                                     http_proxy_port=HTTP_PROXY_PORT)
         self.rmc = ReminderMessageConsumer()
         self.rmc.start()
-        
+
     def run(self):
+        """Listen for messages on PushBullet websocket."""
         try:
             self.logger.info('Waiting for messages. To exit press CTRL+C')
             self.pb_listener.run_forever()
@@ -105,12 +126,18 @@ class PushbulletManager():
             self.pb_listener.close()
 
     def pb_on_error(self, websocket, exception):
-        # If a KeyboardInterrupt is raised during 
+        """Error handler for the PushBullet listener.
+
+        Re-raise any exception that occurs, as otherwise it will be swallowed
+        up by the PushBullet Listener.
+        """
+        # If a KeyboardInterrupt is raised during
         # self.pb_listener.run_forever(), this method is invoked, which is the
         # only way we'll know about it.
         raise exception
 
     def pb_on_push(self, data):
+        """Push handler for the PushBullet listener"""
         try:
             self.logger.debug("Received tickle: %s", str(data))
             push_list = self.pb.get_pushes(limit=1,
@@ -126,6 +153,10 @@ class PushbulletManager():
             self.logger.exception("Error processing push message")
 
     def process_push(self, push):
+        """Process PushBullet JSON message.
+
+        Passes the message to the ReminderManager if appropriate
+        """
         # Pushbullet can also send Links and Images, which don't have a "body"
         if "body" not in push:
             self.logger.info("Ignoring non-note push: id=%s type=%s",
@@ -166,6 +197,7 @@ class PushbulletManager():
             self.pb.push_note("Got it!", response["data"]["text"])
 
 def main():
+    """Set up logging and start up a PushBulletManager object"""
     if "logging" in settings.cfg:
         logging.config.dictConfig(settings.cfg["logging"])
     logger = logging.getLogger(__name__)
