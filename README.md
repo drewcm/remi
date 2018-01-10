@@ -1,7 +1,7 @@
 # Remi
 
 A containerized reminder microservice. Reminders can be set up at the command
-line or via http//:pushbullet.com.  Remi sends the reminder notifications via
+line or via http://pushbullet.com.  Remi sends the reminder notifications via
 PushBullet.  Remi is useful for setting quick reminders that can be received
 on both mobile or non-mobile devices.
 
