@@ -1,8 +1,8 @@
 # Remi
 
 A containerized reminder microservice. Reminders can be set up at the command
-line or via http//pushbullet.com.  Remi sends the reminder notifications via
-PushBullet.  Remi is useful for setting quick reminders that can be received 
+line or via http//:pushbullet.com.  Remi sends the reminder notifications via
+PushBullet.  Remi is useful for setting quick reminders that can be received
 on both mobile or non-mobile devices.
 
 Remi is built using Python, Flask, RabbitMQ, SQLite, and Docker.
@@ -10,14 +10,14 @@ Remi is built using Python, Flask, RabbitMQ, SQLite, and Docker.
 ### Example Usage
 
 The examples below will all set reminders.  The syntax for setting reminders is
-the same for the command line as it is when using PushBullet.
+identical on the command line and via the PushBullet web interface.
 
 ```sh
-reminder 4h MESSAGE
-reminder 1d4hr30m MESSAGE
-reminder tomorrow MESSAGE
-reminder 7pm MESSAGE
-reminder 12:30am MESSAGE
+reminder 4h OPTIONAL_MESSAGE
+reminder 1d4hr30m OPTIONAL_MESSAGE
+reminder tomorrow OPTIONAL_MESSAGE
+reminder 7pm OPTIONAL_MESSAGE
+reminder 12:30am OPTIONAL_MESSAGE
 ```
 
 ### Reminder Confirmation

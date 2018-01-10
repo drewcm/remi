@@ -79,6 +79,10 @@ class QueryThread(threading.Thread):
 
 class ReminderManager():
     def __init__(self):
+        """
+        Initialize database, RabbitMQ outgoing connection, and create the
+        QueryThread listener for incoming messages.
+        """
         self.logger = logging.getLogger(__name__)
         parsedatetime.debug = True
         parsedatetime.log = self.logger
@@ -135,6 +139,13 @@ class ReminderManager():
             self.logger.debug("parsedatetime returned '%s'", str(dt))
             if parse_status == 0:
                 raise ValueError("Error: invalid time format: " + time_str)
+            # PDT will often return datetimes from earlier "today" for relative
+            # time requests.  Since the library doesn't provide many options
+            # to control how times are parsed, this is a bit of a hack which assumes
+            # such requests are actually for "tomorrow".
+            now = datetime.now(self.timezone)
+            if dt.date() == now.date() and dt < now:
+                dt = dt + timedelta(days=1)
         return dt
 
     def process_request(self, ch, method, props, body):
